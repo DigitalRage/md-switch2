@@ -18,6 +18,7 @@
         button, a { border: 1px solid #657982; padding: 10px 15px; color: #f4f2ed; background: #27343b; font: inherit; text-decoration: none; cursor: pointer; }
         button:hover, button:focus-visible, a:hover, a:focus-visible { border-color: #d4a35d; background: #35474f; }
         .back { margin-left: auto; }
+        #seekBar { width: 100%; margin-top: 14px; }
     </style>
 </head>
 <body>
@@ -26,7 +27,13 @@
             <h1>Murder Drones Episode 1 Tech Demo</h1>
             <p class="status"><span id="frameNumber">1</span> / 5000</p>
         </header>
-        <div class="screen"><img id="frame" alt="Murder Drones Episode 1 frame"></div>
+
+        <div class="screen">
+            <img id="frame" alt="Murder Drones Episode 1 frame">
+        </div>
+
+        <input type="range" id="seekBar" min="0" max="5000" value="0">
+
         <div class="controls">
             <button type="button" onclick="rewind()">&#9194; -10s</button>
             <button type="button" onclick="togglePlay()" id="playButton">&#9208; Pause</button>
@@ -34,46 +41,57 @@
             <a class="back" href="../index.html">Back to animations</a>
         </div>
     </main>
+
     <script>
         const FRAME_COUNT = 5000;
         const FPS = 24;
         const FRAME_TIME = 1000 / FPS;
         const JUMP_FRAMES = FPS * 10;
-        const MAX_CACHED_FRAMES = FPS * 3;
-        const FRAME_LOAD_TIMEOUT = 5000;
-        const frames = Array.from({ length: FRAME_COUNT }, (_, index) => {
-            const frameNumber = String(index + 1).padStart(6, "0");
-            return `MD-EP1-CC_frames_low-qual-demo/frame_${frameNumber}.jpg`;
-        });
+        const MAX_CACHED_FRAMES = FPS * 2;
+        const FRAME_LOAD_TIMEOUT = 8000;
+
         let index = 0;
         let playing = true;
         let playbackToken = 0;
+
+        const frames = Array.from({ length: FRAME_COUNT }, (_, i) => {
+            const num = String(i + 1).padStart(6, "0");
+            return `MD-EP1-CC_frames_low-qual-demo/frame_${num}.jpg`;
+        });
+
         const loadedFrames = new Map();
         const img = document.getElementById("frame");
         const frameNumber = document.getElementById("frameNumber");
+        const seekBar = document.getElementById("seekBar");
         const playButton = document.getElementById("playButton");
 
         function loadFrame(frameIndex) {
             if (!loadedFrames.has(frameIndex)) {
                 const image = new Image();
-                const frame = new Promise((resolve, reject) => {
+                const framePromise = new Promise((resolve, reject) => {
                     let settled = false;
-                    const finish = (callback, value) => {
+                    const timeout = setTimeout(() => {
                         if (!settled) {
                             settled = true;
-                            clearTimeout(timeout);
-                            callback(value);
+                            reject(new Error("timeout"));
                         }
-                    };
-                    const timeout = setTimeout(() => finish(reject, new Error("Frame load timed out")), FRAME_LOAD_TIMEOUT);
+                    }, FRAME_LOAD_TIMEOUT);
+
                     image.onload = () => {
-                        const decoded = typeof image.decode === "function" ? image.decode() : Promise.resolve();
-                        decoded.then(() => finish(resolve, image)).catch((error) => finish(reject, error));
+                        settled = true;
+                        clearTimeout(timeout);
+                        resolve(image);
                     };
-                    image.onerror = () => finish(reject, new Error("Frame failed to load"));
+                    image.onerror = () => {
+                        settled = true;
+                        clearTimeout(timeout);
+                        reject(new Error("error"));
+                    };
                 });
+
                 image.src = frames[frameIndex];
-                loadedFrames.set(frameIndex, frame);
+                loadedFrames.set(frameIndex, framePromise);
+
                 while (loadedFrames.size > MAX_CACHED_FRAMES) {
                     loadedFrames.delete(loadedFrames.keys().next().value);
                 }
@@ -82,63 +100,73 @@
         }
 
         async function showFrame() {
-            let image;
             try {
-                image = await loadFrame(index);
-            } catch (error) {
-                console.warn(`Skipping frame ${index + 1}:`, error.message);
+                const image = await loadFrame(index);
+                img.src = image.src;
+                frameNumber.textContent = index + 1;
+                seekBar.value = index;
+                return true;
+            } catch {
                 return false;
             }
-            img.src = image.src;
-            frameNumber.textContent = index + 1;
-            return true;
         }
 
-        function wait(milliseconds) {
-            return new Promise((resolve) => setTimeout(resolve, milliseconds));
+        function wait(ms) {
+            return new Promise(res => setTimeout(res, ms));
         }
 
         async function playbackLoop(token) {
             while (playing && token === playbackToken) {
                 await showFrame();
                 await wait(FRAME_TIME);
+
                 if (playing && token === playbackToken) {
-                    index = (index + 1) % frames.length;
+                    index = Math.min(index + 1, FRAME_COUNT - 1);
                 }
             }
         }
 
         function startPlayback() {
-            playbackToken += 1;
+            playbackToken++;
             playbackLoop(playbackToken);
         }
 
         function stopPlayback() {
-            playbackToken += 1;
+            playbackToken++;
         }
 
         function togglePlay() {
             playing = !playing;
             if (playing) {
-                startPlayback();
                 playButton.innerHTML = "&#9208; Pause";
+                startPlayback();
             } else {
-                stopPlayback();
                 playButton.innerHTML = "&#9654; Play";
+                stopPlayback();
             }
         }
+
         function rewind() {
             stopPlayback();
             index = Math.max(index - JUMP_FRAMES, 0);
             showFrame();
             if (playing) startPlayback();
         }
+
         function fastForward() {
             stopPlayback();
-            index = Math.min(index + JUMP_FRAMES, frames.length - 1);
+            index = Math.min(index + JUMP_FRAMES, FRAME_COUNT - 1);
             showFrame();
             if (playing) startPlayback();
         }
+
+        seekBar.addEventListener("input", () => {
+            stopPlayback();
+            index = Number(seekBar.value);
+            showFrame();
+            if (playing) startPlayback();
+        });
+
         showFrame();
         startPlayback();
     </script>
