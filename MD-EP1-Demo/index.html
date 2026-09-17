@@ -35,19 +35,21 @@
         <input type="range" id="seekBar" min="0" max="4999" value="0">
 
         <div class="controls">
-            <button type="button" onclick="rewind()">&#9194; -10s</button>
-            <button type="button" onclick="togglePlay()" id="playButton">&#9208; Pause</button>
-            <button type="button" onclick="fastForward()">&#9193; +10s</button>
+            <button onclick="setFPS(12)">12 FPS</button>
+            <button onclick="setFPS(24)">24 FPS</button>
+            <button onclick="rewind()">&#9194; -10s</button>
+            <button onclick="togglePlay()" id="playButton">&#9208; Pause</button>
+            <button onclick="fastForward()">&#9193; +10s</button>
             <a class="back" href="../index.html">Back to animations</a>
         </div>
     </main>
 
     <script>
         const FRAME_COUNT = 5000;
-        const FPS = 24;
-        const FRAME_TIME = 1000 / FPS;
-        const JUMP_FRAMES = FPS * 10;
-        const MAX_CACHED_FRAMES = FPS * 2; // 48 frames: enough for smooth cooldown
+        let FPS = 24;
+        let FRAME_TIME = 1000 / FPS;
+        const JUMP_FRAMES = () => FPS * 10;
+        const MAX_CACHED_FRAMES = () => FPS * 2;
         const FRAME_LOAD_TIMEOUT = 8000;
         const COOLDOWN_INTERVAL_FRAMES = 300;
         const COOLDOWN_DURATION_MS = 60;
@@ -69,6 +71,14 @@
         const playButton = document.getElementById("playButton");
 
         const loader = new Image();
+
+        function setFPS(newFPS) {
+            FPS = newFPS;
+            FRAME_TIME = 1000 / FPS;
+            loadedFrames.clear();
+            stopPlayback();
+            startPlayback();
+        }
 
         function loadFrame(frameIndex) {
             if (!loadedFrames.has(frameIndex)) {
@@ -101,7 +111,7 @@
 
                 loadedFrames.set(frameIndex, framePromise);
 
-                while (loadedFrames.size > MAX_CACHED_FRAMES) {
+                while (loadedFrames.size > MAX_CACHED_FRAMES()) {
                     loadedFrames.delete(loadedFrames.keys().next().value);
                 }
             }
@@ -166,14 +176,14 @@
 
         function rewind() {
             stopPlayback();
-            index = Math.max(index - JUMP_FRAMES, 0);
+            index = Math.max(index - JUMP_FRAMES(), 0);
             showFrame();
             if (playing) startPlayback();
         }
 
         function fastForward() {
             stopPlayback();
-            index = Math.min(index + JUMP_FRAMES, FRAME_COUNT - 1);
+            index = Math.min(index + JUMP_FRAMES(), FRAME_COUNT - 1);
             showFrame();
             if (playing) startPlayback();
         }
