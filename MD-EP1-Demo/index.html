@@ -32,7 +32,7 @@
             <img id="frame" alt="Murder Drones Episode 1 frame">
         </div>
 
-        <input type="range" id="seekBar" min="0" max="5000" value="0">
+        <input type="range" id="seekBar" min="0" max="4999" value="0">
 
         <div class="controls">
             <button type="button" onclick="rewind()">&#9194; -10s</button>
@@ -47,12 +47,15 @@
         const FPS = 24;
         const FRAME_TIME = 1000 / FPS;
         const JUMP_FRAMES = FPS * 10;
-        const MAX_CACHED_FRAMES = FPS * 2;
+        const MAX_CACHED_FRAMES = FPS * 2; // 48 frames: enough for smooth cooldown
         const FRAME_LOAD_TIMEOUT = 8000;
+        const COOLDOWN_INTERVAL_FRAMES = 300;
+        const COOLDOWN_DURATION_MS = 60;
 
         let index = 0;
         let playing = true;
         let playbackToken = 0;
+        let lastTime = performance.now();
 
         const frames = Array.from({ length: FRAME_COUNT }, (_, i) => {
             const num = String(i + 1).padStart(6, "0");
@@ -65,9 +68,10 @@
         const seekBar = document.getElementById("seekBar");
         const playButton = document.getElementById("playButton");
 
+        const loader = new Image();
+
         function loadFrame(frameIndex) {
             if (!loadedFrames.has(frameIndex)) {
-                const image = new Image();
                 const framePromise = new Promise((resolve, reject) => {
                     let settled = false;
                     const timeout = setTimeout(() => {
@@ -77,19 +81,24 @@
                         }
                     }, FRAME_LOAD_TIMEOUT);
 
-                    image.onload = () => {
-                        settled = true;
-                        clearTimeout(timeout);
-                        resolve(image);
+                    loader.onload = () => {
+                        if (!settled) {
+                            settled = true;
+                            clearTimeout(timeout);
+                            resolve(loader.src);
+                        }
                     };
-                    image.onerror = () => {
-                        settled = true;
-                        clearTimeout(timeout);
-                        reject(new Error("error"));
+                    loader.onerror = () => {
+                        if (!settled) {
+                            settled = true;
+                            clearTimeout(timeout);
+                            reject(new Error("error"));
+                        }
                     };
+
+                    loader.src = frames[frameIndex];
                 });
 
-                image.src = frames[frameIndex];
                 loadedFrames.set(frameIndex, framePromise);
 
                 while (loadedFrames.size > MAX_CACHED_FRAMES) {
@@ -101,8 +110,8 @@
 
         async function showFrame() {
             try {
-                const image = await loadFrame(index);
-                img.src = image.src;
+                const src = await loadFrame(index);
+                img.src = src;
                 frameNumber.textContent = index + 1;
                 seekBar.value = index;
                 return true;
@@ -117,17 +126,26 @@
 
         async function playbackLoop(token) {
             while (playing && token === playbackToken) {
-                await showFrame();
-                await wait(FRAME_TIME);
+                const now = performance.now();
+                const elapsed = now - lastTime;
 
-                if (playing && token === playbackToken) {
+                if (elapsed >= FRAME_TIME) {
+                    lastTime = now;
                     index = Math.min(index + 1, FRAME_COUNT - 1);
+                    await showFrame();
+
+                    if (index % COOLDOWN_INTERVAL_FRAMES === 0) {
+                        await wait(COOLDOWN_DURATION_MS);
+                    }
                 }
+
+                await wait(0);
             }
         }
 
         function startPlayback() {
             playbackToken++;
+            lastTime = performance.now();
             playbackLoop(playbackToken);
         }
 
