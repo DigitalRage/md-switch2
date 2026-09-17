@@ -53,121 +53,107 @@
 
     <script>
         const FRAME_COUNT = 16154;
-        let FPS = 12; // Final version default
+        let FPS = 12;
         let FRAME_TIME = 1000 / FPS;
         const JUMP_FRAMES = () => FPS * 10;
-        const MAX_CACHED_FRAMES = () => FPS * 2;
-        const FRAME_LOAD_TIMEOUT = 8000;
-        const COOLDOWN_INTERVAL_FRAMES = 300;
-        const COOLDOWN_DURATION_MS = 60;
+        const MAX_CACHED_FRAMES = 6;
+        const PREFETCH_DISTANCE = 3;
 
         let index = 0;
         let playing = true;
-        let playbackToken = 0;
-        let lastTime = performance.now();
+        let rafId = 0;
+        let lastPaintTime = 0;
 
-        const frames = Array.from({ length: FRAME_COUNT }, (_, i) => {
-            const num = String(i + 1).padStart(6, "0");
-            // The source images are .jpeg files, not .jpg, so use the actual extension.
-            return `MD-EP-Pilot-CC/frame_${num}.jpeg`;
-        });
-
-        const loadedFrames = new Map();
+        const frameCache = new Map();
         const img = document.getElementById("frame");
         const frameNumber = document.getElementById("frameNumber");
         const seekBar = document.getElementById("seekBar");
         const playButton = document.getElementById("playButton");
 
+        function getFramePath(frameIndex) {
+            const num = String(frameIndex + 1).padStart(6, "0");
+            return `MD-EP-Pilot-CC/frame_${num}.jpeg`;
+        }
+
+        function pruneCache() {
+            while (frameCache.size > MAX_CACHED_FRAMES) {
+                const oldestKey = frameCache.keys().next().value;
+                frameCache.delete(oldestKey);
+            }
+        }
+
+        function preloadFrame(frameIndex) {
+            if (frameIndex < 0 || frameIndex >= FRAME_COUNT || frameCache.has(frameIndex)) {
+                return;
+            }
+
+            const image = new Image();
+            image.decoding = "sync";
+            image.onload = () => {
+                frameCache.set(frameIndex, image.src);
+                pruneCache();
+            };
+            image.onerror = () => {
+                frameCache.delete(frameIndex);
+            };
+            image.src = getFramePath(frameIndex);
+            frameCache.set(frameIndex, image.src);
+            pruneCache();
+        }
+
+        function prefetchAround(currentIndex) {
+            for (let i = currentIndex - PREFETCH_DISTANCE; i <= currentIndex + PREFETCH_DISTANCE; i++) {
+                if (i >= 0 && i < FRAME_COUNT) {
+                    preloadFrame(i);
+                }
+            }
+        }
+
         function setFPS(newFPS) {
             FPS = newFPS;
             FRAME_TIME = 1000 / FPS;
-            loadedFrames.clear();
             stopPlayback();
             startPlayback();
         }
 
-        function loadFrame(frameIndex) {
-            if (!loadedFrames.has(frameIndex)) {
-                const image = new Image();
-                const framePromise = new Promise((resolve, reject) => {
-                    let settled = false;
-                    const timeout = setTimeout(() => {
-                        if (!settled) {
-                            settled = true;
-                            reject(new Error("timeout"));
-                        }
-                    }, FRAME_LOAD_TIMEOUT);
+        function showFrame() {
+            if (index < 0) index = 0;
+            if (index >= FRAME_COUNT) index = FRAME_COUNT - 1;
 
-                    image.onload = () => {
-                        if (!settled) {
-                            settled = true;
-                            clearTimeout(timeout);
-                            resolve(image.src);
-                        }
-                    };
-                    image.onerror = () => {
-                        if (!settled) {
-                            settled = true;
-                            clearTimeout(timeout);
-                            reject(new Error("error"));
-                        }
-                    };
-
-                    image.src = frames[frameIndex];
-                });
-
-                loadedFrames.set(frameIndex, framePromise);
-
-                while (loadedFrames.size > MAX_CACHED_FRAMES()) {
-                    loadedFrames.delete(loadedFrames.keys().next().value);
-                }
-            }
-            return loadedFrames.get(frameIndex);
+            const src = frameCache.get(index) || getFramePath(index);
+            img.src = src;
+            frameNumber.textContent = index + 1;
+            seekBar.value = index;
+            prefetchAround(index);
         }
 
-        async function showFrame() {
-            try {
-                const src = await loadFrame(index);
-                img.src = src;
-                frameNumber.textContent = index + 1;
-                seekBar.value = index;
-                return true;
-            } catch {
-                return false;
-            }
+        function updateFrame(step) {
+            index = Math.min(Math.max(index + step, 0), FRAME_COUNT - 1);
+            showFrame();
         }
 
-        function wait(ms) {
-            return new Promise(res => setTimeout(res, ms));
-        }
+        function playbackLoop(timestamp) {
+            if (!playing) return;
 
-        async function playbackLoop(token) {
-            while (playing && token === playbackToken) {
-                const now = performance.now();
-                const elapsed = now - lastTime;
-
-                if (elapsed >= FRAME_TIME) {
-                    lastTime = now;
-                    index = Math.min(index + 1, FRAME_COUNT - 1);
-                    await showFrame();
-
-                    if (index % COOLDOWN_INTERVAL_FRAMES === 0) {
-                        await wait(COOLDOWN_DURATION_MS);
-                    }
-                }
-
-                await wait(0);
+            if (timestamp - lastPaintTime >= FRAME_TIME) {
+                lastPaintTime = timestamp;
+                updateFrame(1);
             }
+
+            rafId = requestAnimationFrame(playbackLoop);
         }
 
         function startPlayback() {
-            playbackToken++;
-            lastTime = performance.now();
-            playbackLoop(playbackToken);
+            stopPlayback();
+            lastPaintTime = performance.now();
+            rafId = requestAnimationFrame(playbackLoop);
         }
 
         function stopPlayback() {
-            playbackToken++;
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
         }
 
         function togglePlay() {
@@ -202,13 +188,12 @@
             if (playing) startPlayback();
         });
 
-        (async () => {
-            await loadFrame(0);
-            await loadFrame(1);
-            await loadFrame(2);
-            await showFrame();
-            startPlayback();
-        })();
+        for (let i = 0; i < 3; i++) {
+            preloadFrame(i);
+        }
+
+        showFrame();
+        startPlayback();
     </script>
 </body>
 </html>
