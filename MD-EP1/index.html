@@ -68,8 +68,8 @@
 
         const frames = Array.from({ length: FRAME_COUNT }, (_, i) => {
             const num = String(i + 1).padStart(6, "0");
-            return `MD-EP-Pilot-CC/frame_${num}.jpg`; 
-            /* Update folder name if needed */
+            // The source images are .jpeg files, not .jpg, so use the actual extension.
+            return `MD-EP-Pilot-CC/frame_${num}.jpeg`;
         });
 
         const loadedFrames = new Map();
