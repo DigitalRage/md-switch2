@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Murder Drones Episode 1 Pilot</title>
+    <title>Murder Drones Episode 4 Cabin Fever</title>
     <style>
         :root { color-scheme: dark; font-family: Arial, sans-serif; background: #10151a; color: #f4f2ed; }
         * { box-sizing: border-box; }
@@ -31,15 +31,15 @@
 <body>
     <main class="player">
         <header>
-            <h1>Murder Drones Episode 1 Pilot</h1>
-            <p class="status"><span id="frameNumber">1</span> / 16154</p>
+            <h1>Murder Drones Episode 4 Cabin Fever</h1>
+            <p class="status"><span id="frameNumber">1</span> / 15128</p>
         </header>
 
         <div class="screen">
             <img id="frame" alt="Episode Frame">
         </div>
 
-        <input type="range" id="seekBar" min="0" max="16153" value="0">
+        <input type="range" id="seekBar" min="0" max="15128" value="0">
 
         <div class="controls">
             <button onclick="setFPS(12)">12 FPS</button>
@@ -52,7 +52,7 @@
     </main>
 
     <script>
-        const FRAME_COUNT = 16154;
+        const FRAME_COUNT = 13540;
         const SOURCE_FPS = 12;
         let FPS = 12;
         let FRAME_TIME = 1000 / FPS;
@@ -74,7 +74,7 @@
 
         function getFramePath(frameIndex) {
             const num = String(frameIndex + 1).padStart(6, "0");
-            return `MD-EP-Pilot-CC/frame_${num}.jpeg`;
+            return `MD-EP-Cabin_Fever-CC/frame_${num}.jpeg`;
         }
 
         function pruneCache() {
