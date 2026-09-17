@@ -29,7 +29,7 @@
         </header>
 
         <div class="screen">
-            <img id="frame" alt="Murder Drones Episode 1 frame" loading="lazy">
+            <img id="frame" alt="Murder Drones Episode 1 frame">
         </div>
 
         <input type="range" id="seekBar" min="0" max="4999" value="0">
@@ -49,11 +49,10 @@
         let FPS = 24;
         let FRAME_TIME = 1000 / FPS;
         const JUMP_FRAMES = () => FPS * 10;
-        const MAX_CACHED_FRAMES = () => FPS * 2; // small but enough for preload + cooldown
+        const MAX_CACHED_FRAMES = () => FPS * 2;
         const FRAME_LOAD_TIMEOUT = 8000;
         const COOLDOWN_INTERVAL_FRAMES = 300;
         const COOLDOWN_DURATION_MS = 60;
-        const PRELOAD_AHEAD_COUNT = 5;
 
         let index = 0;
         let playing = true;
@@ -81,20 +80,7 @@
             startPlayback();
         }
 
-        function rollingEvict() {
-            while (loadedFrames.size > MAX_CACHED_FRAMES()) {
-                const farBehind = index - loadedFrames.size;
-                if (loadedFrames.has(farBehind)) {
-                    loadedFrames.delete(farBehind);
-                } else {
-                    loadedFrames.delete(loadedFrames.keys().next().value);
-                }
-            }
-        }
-
         function loadFrame(frameIndex) {
-            if (frameIndex < 0 || frameIndex >= FRAME_COUNT) return Promise.reject(new Error("out-of-range"));
-
             if (!loadedFrames.has(frameIndex)) {
                 const framePromise = new Promise((resolve, reject) => {
                     let settled = false;
@@ -124,22 +110,12 @@
                 });
 
                 loadedFrames.set(frameIndex, framePromise);
-                rollingEvict();
-            }
-            return loadedFrames.get(frameIndex);
-        }
 
-        async function preloadAhead() {
-            for (let i = 1; i <= PRELOAD_AHEAD_COUNT; i++) {
-                const next = index + i;
-                if (next < FRAME_COUNT && !loadedFrames.has(next)) {
-                    try {
-                        await loadFrame(next);
-                    } catch {
-                        // ignore preload failures
-                    }
+                while (loadedFrames.size > MAX_CACHED_FRAMES()) {
+                    loadedFrames.delete(loadedFrames.keys().next().value);
                 }
             }
+            return loadedFrames.get(frameIndex);
         }
 
         async function showFrame() {
@@ -158,28 +134,23 @@
             return new Promise(res => setTimeout(res, ms));
         }
 
-        function playbackLoop(token) {
-            function step(now) {
-                if (!playing || token !== playbackToken) return;
-
+        async function playbackLoop(token) {
+            while (playing && token === playbackToken) {
+                const now = performance.now();
                 const elapsed = now - lastTime;
+
                 if (elapsed >= FRAME_TIME) {
                     lastTime = now;
                     index = Math.min(index + 1, FRAME_COUNT - 1);
-                    showFrame();
-                    preloadAhead();
+                    await showFrame();
 
                     if (index % COOLDOWN_INTERVAL_FRAMES === 0) {
-                        wait(COOLDOWN_DURATION_MS).then(() => {
-                            requestAnimationFrame(step);
-                        });
-                        return;
+                        await wait(COOLDOWN_DURATION_MS);
                     }
                 }
 
-                requestAnimationFrame(step);
+                await wait(0);
             }
-            requestAnimationFrame(step);
         }
 
         function startPlayback() {
@@ -207,7 +178,6 @@
             stopPlayback();
             index = Math.max(index - JUMP_FRAMES(), 0);
             showFrame();
-            preloadAhead();
             if (playing) startPlayback();
         }
 
@@ -215,7 +185,6 @@
             stopPlayback();
             index = Math.min(index + JUMP_FRAMES(), FRAME_COUNT - 1);
             showFrame();
-            preloadAhead();
             if (playing) startPlayback();
         }
 
@@ -223,21 +192,11 @@
             stopPlayback();
             index = Number(seekBar.value);
             showFrame();
-            preloadAhead();
             if (playing) startPlayback();
         });
 
-        (async () => {
-            // decode warm-up
-            try {
-                await loadFrame(0);
-                await loadFrame(1);
-                await loadFrame(2);
-            } catch {}
-            await showFrame();
-            preloadAhead();
-            startPlayback();
-        })();
+        showFrame();
+        startPlayback();
     </script>
 </body>
 </html>
