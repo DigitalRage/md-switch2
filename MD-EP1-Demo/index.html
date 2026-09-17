@@ -81,7 +81,7 @@
             }
 
             const image = new Image();
-            image.decoding = "sync";
+            image.decoding = "async";
             image.onload = () => {
                 frameCache.set(frameIndex, image.src);
                 pruneCache();
@@ -105,8 +105,9 @@
         function setFPS(newFPS) {
             FPS = newFPS;
             FRAME_TIME = 1000 / FPS;
-            stopPlayback();
-            startPlayback();
+            if (playing) {
+                startPlayback();
+            }
         }
 
         function showFrame() {

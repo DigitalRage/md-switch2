@@ -43,7 +43,7 @@
 
         <div class="controls">
             <button onclick="setFPS(12)">12 FPS</button>
-            <button onclick="setFPS(24)">24 FPS</button>
+            <button onclick="setFPS(6)">6 FPS</button>
             <button onclick="rewind()">&#9194; -10s</button>
             <button onclick="togglePlay()" id="playButton">&#9208; Pause</button>
             <button onclick="fastForward()">&#9193; +10s</button>
@@ -88,7 +88,7 @@
             }
 
             const image = new Image();
-            image.decoding = "sync";
+            image.decoding = "async";
             image.onload = () => {
                 frameCache.set(frameIndex, image.src);
                 pruneCache();
@@ -112,8 +112,9 @@
         function setFPS(newFPS) {
             FPS = newFPS;
             FRAME_TIME = 1000 / FPS;
-            stopPlayback();
-            startPlayback();
+            if (playing) {
+                startPlayback();
+            }
         }
 
         function showFrame() {
