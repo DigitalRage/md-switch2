@@ -53,9 +53,11 @@
 
     <script>
         const FRAME_COUNT = 16154;
+        const SOURCE_FPS = 12;
         let FPS = 12;
         let FRAME_TIME = 1000 / FPS;
-        const JUMP_FRAMES = () => FPS * 10;
+        let FRAME_STEP = SOURCE_FPS / FPS;
+        const JUMP_FRAMES = () => SOURCE_FPS * 10;
         const MAX_CACHED_FRAMES = 6;
         const PREFETCH_DISTANCE = 3;
 
@@ -102,9 +104,10 @@
         }
 
         function prefetchAround(currentIndex) {
-            for (let i = currentIndex - PREFETCH_DISTANCE; i <= currentIndex + PREFETCH_DISTANCE; i++) {
-                if (i >= 0 && i < FRAME_COUNT) {
-                    preloadFrame(i);
+            for (let offset = -PREFETCH_DISTANCE; offset <= PREFETCH_DISTANCE; offset++) {
+                const frameIndex = currentIndex + offset * FRAME_STEP;
+                if (frameIndex >= 0 && frameIndex < FRAME_COUNT) {
+                    preloadFrame(frameIndex);
                 }
             }
         }
@@ -112,6 +115,7 @@
         function setFPS(newFPS) {
             FPS = newFPS;
             FRAME_TIME = 1000 / FPS;
+            FRAME_STEP = SOURCE_FPS / FPS;
             if (playing) {
                 startPlayback();
             }
@@ -137,8 +141,9 @@
             if (!playing) return;
 
             if (timestamp - lastPaintTime >= FRAME_TIME) {
-                lastPaintTime = timestamp;
-                updateFrame(1);
+                const elapsedFrames = Math.floor((timestamp - lastPaintTime) / FRAME_TIME);
+                lastPaintTime += elapsedFrames * FRAME_TIME;
+                updateFrame(elapsedFrames * FRAME_STEP);
             }
 
             rafId = requestAnimationFrame(playbackLoop);
@@ -188,10 +193,6 @@
             showFrame();
             if (playing) startPlayback();
         });
-
-        for (let i = 0; i < 3; i++) {
-            preloadFrame(i);
-        }
 
         showFrame();
         startPlayback();
