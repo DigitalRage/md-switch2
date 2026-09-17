@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Murder Drones Episode 1 (Final Version)</title>
+    <title>Murder Drones Episode 2 (Final Version)</title>
     <style>
         :root { color-scheme: dark; font-family: Arial, sans-serif; background: #10151a; color: #f4f2ed; }
         * { box-sizing: border-box; }
@@ -31,8 +31,8 @@
 <body>
     <main class="player">
         <header>
-            <h1>Murder Drones Episode 1 (Final Version)</h1>
-            <p class="status"><span id="frameNumber">1</span> / 16154</p>
+            <h1>Murder Drones Episode 3 (Final Version)</h1>
+            <p class="status"><span id="frameNumber">1</span> / 12478</p>
         </header>
 
         <div class="screen">
@@ -52,7 +52,7 @@
     </main>
 
     <script>
-        const FRAME_COUNT = 12478;
+        const FRAME_COUNT = 13540;
         const SOURCE_FPS = 12;
         let FPS = 12;
         let FRAME_TIME = 1000 / FPS;
@@ -74,7 +74,7 @@
 
         function getFramePath(frameIndex) {
             const num = String(frameIndex + 1).padStart(6, "0");
-            return `MD-EP-Heartbeat-CC/frame_${num}.jpeg`;
+            return `MD-EP-The_Promening-CC/frame_${num}.jpeg`;
         }
 
         function pruneCache() {
