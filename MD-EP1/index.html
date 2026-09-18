@@ -27,31 +27,20 @@
         .back { margin-left: auto; }
         #seekBar { width: 100%; margin-top: 14px; }
     </style>
+    <link rel="stylesheet" href="../player.css">
 </head>
 <body>
-    <main class="player">
-        <header>
-            <h1>Murder Drones Episode 1 Pilot</h1>
-            <p class="status"><span id="frameNumber">1</span> / 16154</p>
-        </header>
-
-        <div class="screen">
-            <img id="frame" alt="Episode Frame">
-        </div>
-
-        <input type="range" id="seekBar" min="0" max="16153" value="0">
-
-        <div class="controls">
-            <button onclick="setFPS(12)">12 FPS</button>
-            <button onclick="setFPS(6)">6 FPS</button>
-            <button onclick="rewind()">&#9194; -10s</button>
-            <button onclick="togglePlay()" id="playButton">&#9208; Pause</button>
-            <button onclick="fastForward()">&#9193; +10s</button>
-            <a class="back" href="../index.html">Back</a>
-        </div>
+    <main class="player" data-frame-count="16154" data-source-fps="12" data-frame-path="MD-EP-Pilot-CC">
+        <header class="player-header"><div><p class="kicker">Episode 01 / frame archive</p><h1>Pilot</h1></div><p class="status"><strong id="frameNumber">1 / 16154</strong><span>12 FPS source</span></p></header>
+        <div class="screen"><img id="frame" alt="Episode 1 Pilot frame"><p class="screen-message" id="screenMessage" hidden>Loading frame</p></div>
+        <div class="timeline"><span id="timeDisplay">0:00 / 22:26</span><input type="range" id="seekBar" min="0" max="16153" value="0" aria-label="Seek through episode frames"><span>FRAME SEEK</span></div>
+        <div class="controls"><button class="icon-button" id="stepBackButton" aria-label="Previous frame" title="Previous frame">&#9664;&#124;</button><button id="rewindButton">&#9194; -10 SEC</button><button id="playButton" aria-pressed="true">&#9208; PAUSE</button><button id="forwardButton">+10 SEC &#9193;</button><button class="icon-button" id="stepForwardButton" aria-label="Next frame" title="Next frame">&#9654;&#124;</button></div>
+        <div class="secondary-controls"><div class="utility"><button id="loopButton" aria-pressed="true">&#8635; LOOP</button><button id="zoomButton" aria-pressed="false">ZOOM</button><button id="settingsButton">SETTINGS</button></div><div class="utility"><button id="fullscreenButton">FULLSCREEN</button><a class="back-link" id="backButton" href="../index.html">BACK TO ARCHIVE</a></div></div>
+        <div class="settings" id="settings" hidden><div class="setting"><label for="fpsSelect">Playback rate</label><select id="fpsSelect"><option value="6">6 FPS</option><option value="12" selected>12 FPS</option><option value="24">24 FPS</option></select></div><div class="setting"><span>Keyboard</span><span>SPACE play / pause, J / L jump, arrows step</span></div><div class="setting"><span>Source</span><span>Local JPEG frame sequence</span></div></div>
+        <p class="hint">Frame archive // use the seek bar for precision</p>
     </main>
 
-    <script>
+    <script type="text/plain">
         const FRAME_COUNT = 16154;
         const SOURCE_FPS = 12;
         let FPS = 12;
@@ -197,5 +186,6 @@
         showFrame();
         startPlayback();
     </script>
+    <script src="../player.js"></script>
 </body>
 </html>
