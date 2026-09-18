@@ -83,9 +83,8 @@
     const setPlaying = (shouldPlay) => {
         playing = shouldPlay;
         playButton.setAttribute('aria-pressed', String(playing));
-        const icon = playing ? '23f8' : '25b6';
         const label = playing ? 'Pause' : 'Play';
-        playButton.innerHTML = `<img class="control-icon" src="../assets/icons/${icon}.png" alt=""> ${label}`;
+        playButton.textContent = label;
         if (playing) startPlayback();
         else stopPlayback();
     };
