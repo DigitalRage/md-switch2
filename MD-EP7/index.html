@@ -155,10 +155,10 @@
         function togglePlay() {
             playing = !playing;
             if (playing) {
-                playButton.innerHTML = "&#9208; Pause";
+                playButton.innerHTML = '<img class="control-icon" src="../assets/icons/23f8.png" alt=""> Pause';
                 startPlayback();
             } else {
-                playButton.innerHTML = "&#9654; Play";
+                playButton.innerHTML = '<img class="control-icon" src="../assets/icons/25b6.png" alt=""> Play';
                 stopPlayback();
             }
         }
