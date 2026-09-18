@@ -249,6 +249,8 @@ button:hover, button:focus-visible, a:hover, a:focus-visible, select:focus-visib
 button[aria-pressed='true'] { border-color: var(--teal); color: #071011; background: var(--teal); }
 
 .icon-button { min-width: 42px; padding-inline: 10px; font-size: 1rem; }
+.control-icon { width: 1em; height: 1em; object-fit: contain; vertical-align: -0.15em; }
+.step-divider { margin-left: .15em; }
 
 select { appearance: auto; }
 
