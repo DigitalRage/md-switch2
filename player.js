@@ -22,6 +22,7 @@
     let rafId = 0;
     let lastPaintTime = 0;
     let playbackPosition = 0;
+    let controlsHideTimer = 0;
 
     const formatTime = (frameIndex) => {
         const totalSeconds = Math.floor(frameIndex / sourceFps);
@@ -190,6 +191,15 @@
         if (event.key === 'f') document.getElementById('fullscreenButton').click();
     });
 
+    const showFullscreenControls = () => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) return;
+        player.classList.remove('is-controls-hidden');
+        clearTimeout(controlsHideTimer);
+        controlsHideTimer = setTimeout(() => player.classList.add('is-controls-hidden'), 3000);
+    };
+
+    player.addEventListener('mousemove', showFullscreenControls);
+
     try {
         const saved = JSON.parse(localStorage.getItem(storageKey));
         if (saved?.fps) {
@@ -206,6 +216,9 @@
     const updateFullscreenButton = () => {
         const fullscreen = document.fullscreenElement === player || document.webkitFullscreenElement === player;
         document.getElementById('fullscreenButton').textContent = fullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+        clearTimeout(controlsHideTimer);
+        player.classList.toggle('is-controls-hidden', !fullscreen);
+        if (fullscreen) showFullscreenControls();
     };
     document.addEventListener('fullscreenchange', updateFullscreenButton);
     document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
