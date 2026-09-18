@@ -154,26 +154,26 @@ h1 {
     transition: opacity 180ms ease;
 }
 
-.player:fullscreen .player-header {
-    margin: 0;
-    padding: clamp(18px, 4vw, 34px);
-    background: linear-gradient(rgba(5, 7, 8, .8), transparent);
-}
-
 .player:fullscreen .timeline,
 .player:fullscreen .controls,
 .player:fullscreen .secondary-controls {
     position: absolute;
     right: clamp(18px, 4vw, 52px);
-    bottom: clamp(18px, 4vw, 52px);
     left: clamp(18px, 4vw, 52px);
     margin: 0;
 }
 
-.player:fullscreen .controls { bottom: 102px; }
+.player:fullscreen .timeline {
+    bottom: 126px;
+}
+
+.player:fullscreen .controls {
+    bottom: 76px;
+    justify-content: center;
+}
 
 .player:fullscreen .secondary-controls {
-    bottom: 42px;
+    bottom: 20px;
     padding-top: 0;
     border-top: 0;
 }
@@ -181,7 +181,7 @@ h1 {
 .player:fullscreen .settings {
     position: absolute;
     right: clamp(18px, 4vw, 52px);
-    bottom: 100px;
+    bottom: 76px;
     left: clamp(18px, 4vw, 52px);
     margin: 0;
 }
