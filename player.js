@@ -5,7 +5,6 @@
     const framePath = player.dataset.framePath;
     const frame = document.getElementById('frame');
     const screen = document.querySelector('.screen');
-    const screenMessage = document.getElementById('screenMessage');
     const frameNumber = document.getElementById('frameNumber');
     const timeDisplay = document.getElementById('timeDisplay');
     const seekBar = document.getElementById('seekBar');
@@ -22,7 +21,7 @@
     let looping = true;
     let rafId = 0;
     let lastPaintTime = 0;
-    let frameStep = sourceFps / fps;
+    let playbackPosition = 0;
 
     const formatTime = (frameIndex) => {
         const totalSeconds = Math.floor(frameIndex / sourceFps);
@@ -58,15 +57,12 @@
     };
 
     const prefetchAround = () => {
-        for (let offset = -4; offset <= 4; offset++) preloadFrame(index + offset * frameStep);
+        for (let offset = -4; offset <= 4; offset++) preloadFrame(index + offset);
     };
 
     const showFrame = () => {
         index = Math.max(0, Math.min(index, frameCount - 1));
         const src = cache.get(index) || getFramePath(index);
-        screen.classList.add('is-loading');
-        screenMessage.hidden = false;
-        screenMessage.textContent = 'Loading frame';
         frame.src = src;
         updateStatus();
         prefetchAround();
@@ -96,23 +92,33 @@
         if (nextIndex >= frameCount) {
             if (!looping) {
                 index = frameCount - 1;
+                playbackPosition = index;
                 setPlaying(false);
                 showFrame();
                 return;
             }
             index = 0;
+            playbackPosition = 0;
         } else {
             index = Math.max(nextIndex, 0);
+            playbackPosition = index;
         }
         showFrame();
     };
 
     const playbackLoop = (timestamp) => {
         if (!playing) return;
-        if (timestamp - lastPaintTime >= 1000 / fps) {
-            const elapsedFrames = Math.max(1, Math.floor((timestamp - lastPaintTime) / (1000 / fps)));
-            lastPaintTime += elapsedFrames * (1000 / fps);
-            updateFrame(elapsedFrames * frameStep);
+        const elapsedMilliseconds = timestamp - lastPaintTime;
+        if (elapsedMilliseconds >= 1000 / fps) {
+            playbackPosition += elapsedMilliseconds * sourceFps / 1000;
+            lastPaintTime = timestamp;
+            const nextIndex = Math.floor(playbackPosition);
+            if (nextIndex >= frameCount) {
+                updateFrame(frameCount - index);
+            } else if (nextIndex !== index) {
+                index = nextIndex;
+                showFrame();
+            }
         }
         rafId = requestAnimationFrame(playbackLoop);
     };
@@ -121,28 +127,17 @@
         const wasPlaying = playing;
         setPlaying(false);
         index = Math.max(0, Math.min(index + amount, frameCount - 1));
+        playbackPosition = index;
         showFrame();
         if (wasPlaying) setPlaying(true);
     };
 
     const setFps = (value) => {
         fps = Number(value);
-        frameStep = sourceFps / fps;
         player.dataset.fps = fps;
         localStorage.setItem(storageKey, JSON.stringify({ fps, looping }));
         if (playing) startPlayback();
     };
-
-    frame.addEventListener('load', () => {
-        screen.classList.remove('is-loading');
-        screenMessage.hidden = true;
-    });
-
-    frame.addEventListener('error', () => {
-        screen.classList.remove('is-loading');
-        screenMessage.hidden = false;
-        screenMessage.textContent = 'Frame unavailable';
-    });
 
     playButton.addEventListener('click', () => setPlaying(!playing));
     document.getElementById('backButton').addEventListener('click', () => history.back());
@@ -150,9 +145,18 @@
     document.getElementById('forwardButton').addEventListener('click', () => jump(jumpFrames));
     document.getElementById('stepBackButton').addEventListener('click', () => jump(-1));
     document.getElementById('stepForwardButton').addEventListener('click', () => jump(1));
-    document.getElementById('fullscreenButton').addEventListener('click', () => {
-        if (document.fullscreenElement) document.exitFullscreen();
-        else player.requestFullscreen();
+    document.getElementById('fullscreenButton').addEventListener('click', async () => {
+        if (document.fullscreenElement) {
+            await document.exitFullscreen();
+            return;
+        }
+        const requestFullscreen = player.requestFullscreen || player.webkitRequestFullscreen;
+        if (!requestFullscreen) return;
+        try {
+            await requestFullscreen.call(player, { navigationUI: 'hide' });
+        } catch {
+            await requestFullscreen.call(player);
+        }
     });
     document.getElementById('zoomButton').addEventListener('click', (event) => {
         const zoomed = screen.classList.toggle('is-zoomed');
@@ -171,6 +175,7 @@
         const wasPlaying = playing;
         setPlaying(false);
         index = Number(seekBar.value);
+        playbackPosition = index;
         showFrame();
         if (wasPlaying) setPlaying(true);
     });
@@ -198,6 +203,12 @@
     } catch { /* Ignore unavailable or malformed local preferences. */ }
 
     seekBar.max = frameCount - 1;
+    const updateFullscreenButton = () => {
+        const fullscreen = document.fullscreenElement === player || document.webkitFullscreenElement === player;
+        document.getElementById('fullscreenButton').textContent = fullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+    };
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
     setPlaying(true);
     showFrame();
 })();

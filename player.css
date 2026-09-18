@@ -104,7 +104,6 @@ h1 {
     transition: opacity 160ms ease, transform 180ms ease;
 }
 
-.screen.is-loading img { opacity: .42; }
 .screen.is-zoomed img { transform: scale(1.12); }
 
 .screen-message {
@@ -120,6 +119,18 @@ h1 {
 }
 
 .screen-message[hidden] { display: none; }
+
+.player:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    overflow: auto;
+    border: 0;
+    padding: clamp(18px, 4vw, 52px);
+    background: var(--panel);
+}
+
+.player:fullscreen .screen { max-height: calc(100vh - 245px); }
 
 .timeline {
     display: grid;
