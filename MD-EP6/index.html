@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murder Drones Episode 6 Dead End</title>
+    <style>
+        :root { color-scheme: dark; font-family: Arial, sans-serif; background: #10151a; color: #f4f2ed; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+               background: linear-gradient(135deg, #10151a, #1e2930); }
+        .player { width: min(900px, 100%); padding: 24px; background: #182126;
+                  border: 1px solid #41515a; box-shadow: 0 18px 60px rgba(0,0,0,.35); }
+        header { display: flex; justify-content: space-between; align-items: end;
+                 gap: 20px; margin-bottom: 18px; }
+        h1 { margin: 0; font-size: clamp(1.35rem, 3vw, 2rem); }
+        .status { margin: 0; color: #a8bdc4; font-size: .85rem; }
+        .screen { aspect-ratio: 16 / 9; display: grid; place-items: center;
+                  background: #080a0c; overflow: hidden; }
+        img { display: block; width: 100%; height: 100%; object-fit: contain; }
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+        button, a { border: 1px solid #657982; padding: 10px 15px; color: #f4f2ed;
+                    background: #27343b; font: inherit; text-decoration: none; cursor: pointer; }
+        button:hover, button:focus-visible, a:hover, a:focus-visible {
+            border-color: #d4a35d; background: #35474f;
+        }
+        .back { margin-left: auto; }
+        #seekBar { width: 100%; margin-top: 14px; }
+    </style>
+</head>
+<body>
+    <main class="player">
+        <header>
+            <h1>Murder Drones Episode 6 Dead End</h1>
+            <p class="status"><span id="frameNumber">1</span> / 15125</p>
+        </header>
+
+        <div class="screen">
+            <img id="frame" alt="Episode Frame">
+        </div>
+
+        <input type="range" id="seekBar" min="0" max="15125" value="0">
+
+        <div class="controls">
+            <button onclick="setFPS(12)">12 FPS</button>
+            <button onclick="setFPS(6)">6 FPS</button>
+            <button onclick="rewind()">&#9194; -10s</button>
+            <button onclick="togglePlay()" id="playButton">&#9208; Pause</button>
+            <button onclick="fastForward()">&#9193; +10s</button>
+            <a class="back" href="../index.html">Back</a>
+        </div>
+    </main>
+
+    <script>
+        const FRAME_COUNT = 15125;
+        const SOURCE_FPS = 12;
+        let FPS = 12;
+        let FRAME_TIME = 1000 / FPS;
+        let FRAME_STEP = SOURCE_FPS / FPS;
+        const JUMP_FRAMES = () => SOURCE_FPS * 10;
+        const MAX_CACHED_FRAMES = 6;
+        const PREFETCH_DISTANCE = 3;
+
+        let index = 0;
+        let playing = true;
+        let rafId = 0;
+        let lastPaintTime = 0;
+
+        const frameCache = new Map();
+        const img = document.getElementById("frame");
+        const frameNumber = document.getElementById("frameNumber");
+        const seekBar = document.getElementById("seekBar");
+        const playButton = document.getElementById("playButton");
+
+        function getFramePath(frameIndex) {
+            const num = String(frameIndex + 1).padStart(6, "0");
+            return `MD-EP-Dead_End-CC/frame_${num}.jpeg`;
+        }
+
+        function pruneCache() {
+            while (frameCache.size > MAX_CACHED_FRAMES) {
+                const oldestKey = frameCache.keys().next().value;
+                frameCache.delete(oldestKey);
+            }
+        }
+
+        function preloadFrame(frameIndex) {
+            if (frameIndex < 0 || frameIndex >= FRAME_COUNT || frameCache.has(frameIndex)) {
+                return;
+            }
+
+            const image = new Image();
+            image.decoding = "async";
+            image.onload = () => {
+                frameCache.set(frameIndex, image.src);
+                pruneCache();
+            };
+            image.onerror = () => {
+                frameCache.delete(frameIndex);
+            };
+            image.src = getFramePath(frameIndex);
+            frameCache.set(frameIndex, image.src);
+            pruneCache();
+        }
+
+        function prefetchAround(currentIndex) {
+            for (let offset = -PREFETCH_DISTANCE; offset <= PREFETCH_DISTANCE; offset++) {
+                const frameIndex = currentIndex + offset * FRAME_STEP;
+                if (frameIndex >= 0 && frameIndex < FRAME_COUNT) {
+                    preloadFrame(frameIndex);
+                }
+            }
+        }
+
+        function setFPS(newFPS) {
+            FPS = newFPS;
+            FRAME_TIME = 1000 / FPS;
+            FRAME_STEP = SOURCE_FPS / FPS;
+            if (playing) {
+                startPlayback();
+            }
+        }
+
+        function showFrame() {
+            if (index < 0) index = 0;
+            if (index >= FRAME_COUNT) index = FRAME_COUNT - 1;
+
+            const src = frameCache.get(index) || getFramePath(index);
+            img.src = src;
+            frameNumber.textContent = index + 1;
+            seekBar.value = index;
+            prefetchAround(index);
+        }
+
+        function updateFrame(step) {
+            index = Math.min(Math.max(index + step, 0), FRAME_COUNT - 1);
+            showFrame();
+        }
+
+        function playbackLoop(timestamp) {
+            if (!playing) return;
+
+            if (timestamp - lastPaintTime >= FRAME_TIME) {
+                const elapsedFrames = Math.floor((timestamp - lastPaintTime) / FRAME_TIME);
+                lastPaintTime += elapsedFrames * FRAME_TIME;
+                updateFrame(elapsedFrames * FRAME_STEP);
+            }
+
+            rafId = requestAnimationFrame(playbackLoop);
+        }
+
+        function startPlayback() {
+            stopPlayback();
+            lastPaintTime = performance.now();
+            rafId = requestAnimationFrame(playbackLoop);
+        }
+
+        function stopPlayback() {
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
+        }
+
+        function togglePlay() {
+            playing = !playing;
+            if (playing) {
+                playButton.innerHTML = "&#9208; Pause";
+                startPlayback();
+            } else {
+                playButton.innerHTML = "&#9654; Play";
+                stopPlayback();
+            }
+        }
+
+        function rewind() {
+            stopPlayback();
+            index = Math.max(index - JUMP_FRAMES(), 0);
+            showFrame();
+            if (playing) startPlayback();
+        }
+
+        function fastForward() {
+            stopPlayback();
+            index = Math.min(index + JUMP_FRAMES(), FRAME_COUNT - 1);
+            showFrame();
+            if (playing) startPlayback();
+        }
+
+        seekBar.addEventListener("input", () => {
+            stopPlayback();
+            index = Number(seekBar.value);
+            showFrame();
+            if (playing) startPlayback();
+        });
+
+        showFrame();
+        startPlayback();
+    </script>
+</body>
+</html>
