@@ -5,6 +5,8 @@
     const framePath = player.dataset.framePath;
     const frame = document.getElementById('frame');
     const screen = document.querySelector('.screen');
+    const baseFrameWidth = 426;
+    const baseFrameHeight = 240;
     const frameNumber = document.getElementById('frameNumber');
     const timeDisplay = document.getElementById('timeDisplay');
     const seekBar = document.getElementById('seekBar');
@@ -39,6 +41,14 @@
     };
 
     const isFullscreenActive = () => Boolean(getFullscreenElement?.()) || fallbackFullscreen;
+
+    const updateFrameScale = () => {
+        const widthScale = screen.clientWidth / baseFrameWidth;
+        const heightScale = screen.clientHeight / baseFrameHeight;
+        const fitScale = Math.min(widthScale, heightScale);
+        const zoomScale = screen.classList.contains('is-zoomed') ? 1.12 : 1;
+        screen.style.setProperty('--frame-scale', String(fitScale * zoomScale));
+    };
 
     const updateStatus = () => {
         frameNumber.textContent = `${index + 1} / ${frameCount}`;
@@ -190,6 +200,7 @@
     document.getElementById('zoomButton').addEventListener('click', (event) => {
         const zoomed = screen.classList.toggle('is-zoomed');
         event.currentTarget.setAttribute('aria-pressed', String(zoomed));
+        updateFrameScale();
     });
     document.getElementById('settingsButton').addEventListener('click', () => {
         settings.hidden = !settings.hidden;
@@ -227,6 +238,8 @@
     };
 
     player.addEventListener('mousemove', showFullscreenControls);
+    if (window.ResizeObserver) new ResizeObserver(updateFrameScale).observe(screen);
+    else window.addEventListener('resize', updateFrameScale);
 
     try {
         const saved = JSON.parse(localStorage.getItem(storageKey));
@@ -257,6 +270,7 @@
     };
     document.addEventListener('fullscreenchange', updateFullscreenButton);
     document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    updateFrameScale();
     setPlaying(true);
     showFrame();
 })();
