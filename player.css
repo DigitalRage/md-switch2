@@ -104,7 +104,12 @@ h1 {
     transition: opacity 160ms ease, transform 180ms ease;
 }
 
-.low-res-frame { display: none; }
+.low-res-frame {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
 
 .screen.is-zoomed img { transform: scale(1.12); }
 .screen.is-zoomed .low-res-frame { transform: scale(1.12); }
@@ -279,6 +284,8 @@ h1 {
     display: none;
     transition: none;
 }
+
+.screen img { display: none; }
 
 .screen:-webkit-full-screen .low-res-frame,
 .screen:fullscreen .low-res-frame,
