@@ -150,6 +150,16 @@ h1 {
 .player:-webkit-full-screen .screen::after,
 .player.is-fullscreen .screen::after { display: none; }
 
+.player.is-fullscreen {
+    position: fixed;
+    z-index: 9999;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    margin: 0;
+}
+
 .player:fullscreen .player-header,
 .player:-webkit-full-screen .player-header,
 .player.is-fullscreen .player-header,

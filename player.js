@@ -259,7 +259,8 @@
         const fullscreen = (getFullscreenElement() === player || getFullscreenElement() === screen) || fallbackFullscreen;
         if (fullscreen) setZoom(false);
         document.getElementById('fullscreenButton').textContent = fullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
-        player.classList.toggle('is-frame-fullscreen', fallbackFullscreen);
+        player.classList.toggle('is-fullscreen', fullscreen);
+        player.classList.toggle('is-frame-fullscreen', false);
         if (fullscreen !== lastFullscreenState) {
             cache.clear();
             lastFullscreenState = fullscreen;
