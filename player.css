@@ -164,6 +164,7 @@ h1 {
 .player:fullscreen .screen img,
 .player:-webkit-full-screen .screen img,
 .player.is-fullscreen .screen img {
+    display: block;
     transition: none;
 }
 

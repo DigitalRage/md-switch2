@@ -26,6 +26,7 @@
     let controlsHideTimer = 0;
     let fallbackFullscreen = false;
     let lastFullscreenState = false;
+    frame.decoding = 'async';
 
     const formatTime = (frameIndex) => {
         const totalSeconds = Math.floor(frameIndex / sourceFps);
@@ -60,6 +61,7 @@
         if (frameIndex < 0 || frameIndex >= frameCount || cache.has(frameIndex)) return;
         const image = new Image();
         image.decoding = 'async';
+        image.fetchPriority = 'low';
         image.src = getFramePath(frameIndex);
         cache.set(frameIndex, image.src);
         image.onload = pruneCache;
@@ -68,7 +70,7 @@
     };
 
     const prefetchAround = () => {
-        for (let offset = -40; offset <= 40; offset++) preloadFrame(index + offset); /*Edit this range to control how many frames are prefetched around the current frame. */
+        for (let offset = -4; offset <= 4; offset++) preloadFrame(index + offset);
     };
 
     const showFrame = () => {
@@ -170,6 +172,7 @@
             return;
         }
         setZoom(false);
+        player.classList.add('is-fullscreen');
         const nativeFullscreenTarget = player;
         const requestFullscreen = nativeFullscreenTarget.requestFullscreen || nativeFullscreenTarget.webkitRequestFullscreen;
         if (!requestFullscreen) {
@@ -183,6 +186,7 @@
             try {
                 await requestFullscreen.call(nativeFullscreenTarget);
             } catch {
+                player.classList.remove('is-fullscreen');
                 return;
             }
         }
