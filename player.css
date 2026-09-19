@@ -148,16 +148,16 @@ h1 {
 .player:-webkit-full-screen .screen::after,
 .player.is-fullscreen .screen::after { display: none; }
 
-/* Render fullscreen from a half-size surface, then enlarge it to the viewport. */
-.player:fullscreen .screen img,
-.player:-webkit-full-screen .screen img,
-.screen:fullscreen img,
-.screen:-webkit-full-screen img,
-.player.is-frame-fullscreen .screen img {
-    width: 50%;
-    height: 50%;
-    transform: scale(2);
-    transform-origin: center;
+/* Give the browser a half-scale fullscreen layout, then enlarge that layout. */
+.player:fullscreen .screen,
+.player:-webkit-full-screen .screen,
+.screen:fullscreen,
+.screen:-webkit-full-screen,
+.player.is-frame-fullscreen .screen {
+    zoom: .5;
+    width: 200vw;
+    height: 200vh;
+    max-width: none;
 }
 
 .player:fullscreen .player-header,
