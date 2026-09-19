@@ -68,7 +68,7 @@
     };
 
     const prefetchAround = () => {
-        for (let offset = -4; offset <= 4; offset++) preloadFrame(index + offset);
+        for (let offset = -40; offset <= 40; offset++) preloadFrame(index + offset); /*Edit this range to control how many frames are prefetched around the current frame. */
     };
 
     const showFrame = () => {
