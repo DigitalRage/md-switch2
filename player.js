@@ -5,8 +5,8 @@
     const framePath = player.dataset.framePath;
     const frame = document.getElementById('frame');
     const screen = document.querySelector('.screen');
-    const baseFrameWidth = 426;
-    const baseFrameHeight = 240;
+    const baseFrameWidth = 213;
+    const baseFrameHeight = 120;
     const renderedFrame = document.createElement('canvas');
     renderedFrame.className = 'rendered-frame';
     renderedFrame.width = baseFrameWidth;
