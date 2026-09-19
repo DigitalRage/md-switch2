@@ -5,8 +5,8 @@
     const framePath = player.dataset.framePath;
     const frame = document.getElementById('frame');
     const screen = document.querySelector('.screen');
-    const baseFrameWidth = 213;
-    const baseFrameHeight = 120;
+    const baseFrameWidth = 426;
+    const baseFrameHeight = 240;
     const renderedFrame = document.createElement('canvas');
     renderedFrame.className = 'rendered-frame';
     renderedFrame.width = baseFrameWidth;
@@ -62,6 +62,17 @@
     const setZoom = (zoomed) => {
         screen.classList.toggle('is-zoomed', zoomed);
         zoomButton.setAttribute('aria-pressed', String(zoomed));
+        updateFrameScale();
+    };
+
+    const prepareFullscreenRender = async () => {
+        renderedFrame.classList.add('is-preparing-fullscreen');
+        renderedFrame.getBoundingClientRect();
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+    };
+
+    const finishFullscreenRender = () => {
+        renderedFrame.classList.remove('is-preparing-fullscreen');
         updateFrameScale();
     };
 
@@ -218,18 +229,26 @@
             return;
         }
         setZoom(false);
+        await prepareFullscreenRender();
         const nativeFullscreenTarget = player.requestFullscreen ? player : screen;
         const requestFullscreen = nativeFullscreenTarget.requestFullscreen || nativeFullscreenTarget.webkitRequestFullscreen;
         if (!requestFullscreen) {
             fallbackFullscreen = true;
+            finishFullscreenRender();
             updateFullscreenButton();
             return;
         }
         try {
             await requestFullscreen.call(nativeFullscreenTarget, { navigationUI: 'hide' });
         } catch {
-            await requestFullscreen.call(nativeFullscreenTarget);
+            try {
+                await requestFullscreen.call(nativeFullscreenTarget);
+            } catch {
+                finishFullscreenRender();
+                return;
+            }
         }
+        finishFullscreenRender();
     });
     screen.addEventListener('click', () => {
         if (getFullscreenElement() === screen) {
