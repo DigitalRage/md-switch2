@@ -162,7 +162,10 @@ h1 {
 
 .player:fullscreen .player-header,
 .player:-webkit-full-screen .player-header,
-.player.is-fullscreen .player-header,
+.player.is-fullscreen .player-header {
+    display: none;
+}
+
 .player:fullscreen .timeline,
 .player:-webkit-full-screen .timeline,
 .player.is-fullscreen .timeline,

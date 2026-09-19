@@ -68,8 +68,7 @@
     };
 
     const prefetchAround = () => {
-        const range = isFullscreenActive() ? 2 : 4;
-        for (let offset = -1; offset <= range; offset++) preloadFrame(index + offset);
+        for (let offset = -4; offset <= 4; offset++) preloadFrame(index + offset);
     };
 
     const showFrame = () => {
@@ -262,7 +261,6 @@
         player.classList.toggle('is-fullscreen', fullscreen);
         player.classList.toggle('is-frame-fullscreen', false);
         if (fullscreen !== lastFullscreenState) {
-            cache.clear();
             lastFullscreenState = fullscreen;
             preloadFrame(index);
             prefetchAround();
