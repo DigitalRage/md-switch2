@@ -97,27 +97,11 @@ h1 {
 }
 
 .screen img {
-    display: none;
-}
-
-.rendered-frame {
     display: block;
-    width: 426px;
-    height: 240px;
-    max-width: none;
-    flex: none;
-    image-rendering: auto;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    transform: scale(var(--frame-scale, 1));
-    transform-origin: center;
     transition: opacity 160ms ease, transform 180ms ease;
-}
-
-.rendered-frame.is-preparing-fullscreen {
-    width: 213px;
-    height: 120px;
-    transform: none;
-    transition: none;
 }
 
 

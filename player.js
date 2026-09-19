@@ -5,15 +5,6 @@
     const framePath = player.dataset.framePath;
     const frame = document.getElementById('frame');
     const screen = document.querySelector('.screen');
-    const baseFrameWidth = 426;
-    const baseFrameHeight = 240;
-    const renderedFrame = document.createElement('canvas');
-    renderedFrame.className = 'rendered-frame';
-    renderedFrame.width = baseFrameWidth;
-    renderedFrame.height = baseFrameHeight;
-    renderedFrame.setAttribute('aria-hidden', 'true');
-    screen.appendChild(renderedFrame);
-    const renderedContext = renderedFrame.getContext('2d', { alpha: false });
     const frameNumber = document.getElementById('frameNumber');
     const timeDisplay = document.getElementById('timeDisplay');
     const seekBar = document.getElementById('seekBar');
@@ -35,7 +26,6 @@
     let controlsHideTimer = 0;
     let fallbackFullscreen = false;
     let lastFullscreenState = false;
-    let renderRequest = 0;
 
     const formatTime = (frameIndex) => {
         const totalSeconds = Math.floor(frameIndex / sourceFps);
@@ -51,29 +41,9 @@
 
     const isFullscreenActive = () => Boolean(getFullscreenElement?.()) || fallbackFullscreen;
 
-    const updateFrameScale = () => {
-        const widthScale = screen.clientWidth / baseFrameWidth;
-        const heightScale = screen.clientHeight / baseFrameHeight;
-        const fitScale = Math.min(widthScale, heightScale);
-        const zoomScale = screen.classList.contains('is-zoomed') ? 1.12 : 1;
-        screen.style.setProperty('--frame-scale', String(fitScale * zoomScale));
-    };
-
     const setZoom = (zoomed) => {
         screen.classList.toggle('is-zoomed', zoomed);
         zoomButton.setAttribute('aria-pressed', String(zoomed));
-        updateFrameScale();
-    };
-
-    const prepareFullscreenRender = async () => {
-        renderedFrame.classList.add('is-preparing-fullscreen');
-        renderedFrame.getBoundingClientRect();
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-    };
-
-    const finishFullscreenRender = () => {
-        renderedFrame.classList.remove('is-preparing-fullscreen');
-        updateFrameScale();
     };
 
     const updateStatus = () => {
@@ -106,37 +76,9 @@
         index = Math.max(0, Math.min(index, frameCount - 1));
         const src = cache.get(index) || getFramePath(index);
         frame.src = src;
-        renderSmallFrame();
         if (!isFullscreenActive()) updateStatus();
         prefetchAround();
     };
-
-    const renderSmallFrame = async () => {
-        if (!renderedContext || !frame.complete || !frame.naturalWidth) return;
-        const request = ++renderRequest;
-        if (window.createImageBitmap) {
-            try {
-                const bitmap = await createImageBitmap(frame, {
-                    resizeWidth: baseFrameWidth,
-                    resizeHeight: baseFrameHeight,
-                    resizeQuality: 'low'
-                });
-                if (request !== renderRequest) {
-                    bitmap.close();
-                    return;
-                }
-                renderedContext.clearRect(0, 0, baseFrameWidth, baseFrameHeight);
-                renderedContext.drawImage(bitmap, 0, 0);
-                bitmap.close();
-                return;
-            } catch { /* Fall back to canvas resizing below. */ }
-        }
-        if (request !== renderRequest) return;
-        renderedContext.clearRect(0, 0, baseFrameWidth, baseFrameHeight);
-        renderedContext.drawImage(frame, 0, 0, baseFrameWidth, baseFrameHeight);
-    };
-
-    frame.addEventListener('load', renderSmallFrame);
 
     const stopPlayback = () => {
         if (rafId) cancelAnimationFrame(rafId);
@@ -229,12 +171,10 @@
             return;
         }
         setZoom(false);
-        await prepareFullscreenRender();
         const nativeFullscreenTarget = player.requestFullscreen ? player : screen;
         const requestFullscreen = nativeFullscreenTarget.requestFullscreen || nativeFullscreenTarget.webkitRequestFullscreen;
         if (!requestFullscreen) {
             fallbackFullscreen = true;
-            finishFullscreenRender();
             updateFullscreenButton();
             return;
         }
@@ -244,11 +184,9 @@
             try {
                 await requestFullscreen.call(nativeFullscreenTarget);
             } catch {
-                finishFullscreenRender();
                 return;
             }
         }
-        finishFullscreenRender();
     });
     screen.addEventListener('click', () => {
         if (getFullscreenElement() === screen) {
@@ -303,8 +241,6 @@
     };
 
     player.addEventListener('mousemove', showFullscreenControls);
-    if (window.ResizeObserver) new ResizeObserver(updateFrameScale).observe(screen);
-    else window.addEventListener('resize', updateFrameScale);
 
     try {
         const saved = JSON.parse(localStorage.getItem(storageKey));
@@ -336,7 +272,6 @@
     };
     document.addEventListener('fullscreenchange', updateFullscreenButton);
     document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
-    updateFrameScale();
     setPlaying(true);
     showFrame();
 })();
