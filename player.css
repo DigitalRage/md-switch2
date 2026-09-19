@@ -229,6 +229,47 @@ h1 {
     pointer-events: none;
 }
 
+/* CSS fullscreen fallback for browsers that expose no fullscreen API. */
+.player.is-frame-fullscreen {
+    width: 0;
+    height: 0;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+}
+
+.player.is-frame-fullscreen > :not(.screen) { display: none; }
+
+.player.is-frame-fullscreen .screen {
+    position: fixed;
+    z-index: 9999;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    aspect-ratio: auto;
+    border: 0;
+    background: #000;
+}
+
+.player.is-frame-fullscreen .screen::after { display: none; }
+
+.screen:-webkit-full-screen,
+.screen:fullscreen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    aspect-ratio: auto;
+    border: 0;
+    background: #000;
+}
+
+.screen:-webkit-full-screen::after,
+.screen:fullscreen::after { display: none; }
+
 .timeline {
     display: grid;
     grid-template-columns: auto 1fr auto;

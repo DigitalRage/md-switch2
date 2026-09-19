@@ -160,17 +160,27 @@
             updateFullscreenButton();
             return;
         }
-        const requestFullscreen = player.requestFullscreen || player.webkitRequestFullscreen;
+        const nativeFullscreenTarget = player.requestFullscreen ? player : screen;
+        const requestFullscreen = nativeFullscreenTarget.requestFullscreen || nativeFullscreenTarget.webkitRequestFullscreen;
         if (!requestFullscreen) {
             fallbackFullscreen = true;
-            player.classList.add('is-fullscreen');
             updateFullscreenButton();
             return;
         }
         try {
-            await requestFullscreen.call(player, { navigationUI: 'hide' });
+            await requestFullscreen.call(nativeFullscreenTarget, { navigationUI: 'hide' });
         } catch {
-            await requestFullscreen.call(player);
+            await requestFullscreen.call(nativeFullscreenTarget);
+        }
+    });
+    screen.addEventListener('click', () => {
+        if (getFullscreenElement() === screen) {
+            if (exitFullscreen) exitFullscreen.call(document);
+            return;
+        }
+        if (fallbackFullscreen) {
+            fallbackFullscreen = false;
+            updateFullscreenButton();
         }
     });
     document.getElementById('zoomButton').addEventListener('click', (event) => {
@@ -206,7 +216,7 @@
     });
 
     const showFullscreenControls = () => {
-        if (!getFullscreenElement() && !player.classList.contains('is-fullscreen')) return;
+        if (!getFullscreenElement() && !fallbackFullscreen) return;
         player.classList.remove('is-controls-hidden');
         clearTimeout(controlsHideTimer);
         controlsHideTimer = setTimeout(() => player.classList.add('is-controls-hidden'), 3000);
@@ -228,9 +238,9 @@
 
     seekBar.max = frameCount - 1;
     const updateFullscreenButton = () => {
-        const fullscreen = getFullscreenElement() === player || fallbackFullscreen;
+        const fullscreen = (getFullscreenElement() === player || getFullscreenElement() === screen) || fallbackFullscreen;
         document.getElementById('fullscreenButton').textContent = fullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
-        player.classList.toggle('is-fullscreen', fullscreen);
+        player.classList.toggle('is-frame-fullscreen', fallbackFullscreen);
         clearTimeout(controlsHideTimer);
         player.classList.toggle('is-controls-hidden', !fullscreen);
         if (fullscreen) showFullscreenControls();
