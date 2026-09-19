@@ -97,11 +97,16 @@ h1 {
 }
 
 .screen img {
+    display: none;
+}
+
+.rendered-frame {
     display: block;
     width: 426px;
     height: 240px;
     max-width: none;
     flex: none;
+    image-rendering: auto;
     object-fit: contain;
     transform: scale(var(--frame-scale, 1));
     transform-origin: center;

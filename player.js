@@ -7,6 +7,13 @@
     const screen = document.querySelector('.screen');
     const baseFrameWidth = 426;
     const baseFrameHeight = 240;
+    const renderedFrame = document.createElement('canvas');
+    renderedFrame.className = 'rendered-frame';
+    renderedFrame.width = baseFrameWidth;
+    renderedFrame.height = baseFrameHeight;
+    renderedFrame.setAttribute('aria-hidden', 'true');
+    screen.appendChild(renderedFrame);
+    const renderedContext = renderedFrame.getContext('2d', { alpha: false });
     const frameNumber = document.getElementById('frameNumber');
     const timeDisplay = document.getElementById('timeDisplay');
     const seekBar = document.getElementById('seekBar');
@@ -27,6 +34,7 @@
     let controlsHideTimer = 0;
     let fallbackFullscreen = false;
     let lastFullscreenState = false;
+    let renderRequest = 0;
 
     const formatTime = (frameIndex) => {
         const totalSeconds = Math.floor(frameIndex / sourceFps);
@@ -80,9 +88,37 @@
         index = Math.max(0, Math.min(index, frameCount - 1));
         const src = cache.get(index) || getFramePath(index);
         frame.src = src;
+        renderSmallFrame();
         if (!isFullscreenActive()) updateStatus();
         prefetchAround();
     };
+
+    const renderSmallFrame = async () => {
+        if (!renderedContext || !frame.complete || !frame.naturalWidth) return;
+        const request = ++renderRequest;
+        if (window.createImageBitmap) {
+            try {
+                const bitmap = await createImageBitmap(frame, {
+                    resizeWidth: baseFrameWidth,
+                    resizeHeight: baseFrameHeight,
+                    resizeQuality: 'low'
+                });
+                if (request !== renderRequest) {
+                    bitmap.close();
+                    return;
+                }
+                renderedContext.clearRect(0, 0, baseFrameWidth, baseFrameHeight);
+                renderedContext.drawImage(bitmap, 0, 0);
+                bitmap.close();
+                return;
+            } catch { /* Fall back to canvas resizing below. */ }
+        }
+        if (request !== renderRequest) return;
+        renderedContext.clearRect(0, 0, baseFrameWidth, baseFrameHeight);
+        renderedContext.drawImage(frame, 0, 0, baseFrameWidth, baseFrameHeight);
+    };
+
+    frame.addEventListener('load', renderSmallFrame);
 
     const stopPlayback = () => {
         if (rafId) cancelAnimationFrame(rafId);
