@@ -104,6 +104,8 @@ h1 {
     transition: opacity 160ms ease, transform 180ms ease;
 }
 
+.screen.is-zoomed img { transform: scale(1.12); }
+
 
 .screen-message {
     position: absolute;
@@ -147,18 +149,6 @@ h1 {
 .player:fullscreen .screen::after,
 .player:-webkit-full-screen .screen::after,
 .player.is-fullscreen .screen::after { display: none; }
-
-/* Give the browser a half-scale fullscreen layout, then enlarge that layout. */
-.player:fullscreen .screen,
-.player:-webkit-full-screen .screen,
-.screen:fullscreen,
-.screen:-webkit-full-screen,
-.player.is-frame-fullscreen .screen {
-    zoom: .5;
-    width: 200vw;
-    height: 200vh;
-    max-width: none;
-}
 
 .player:fullscreen .player-header,
 .player:-webkit-full-screen .player-header,

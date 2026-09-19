@@ -171,7 +171,7 @@
             return;
         }
         setZoom(false);
-        const nativeFullscreenTarget = player.requestFullscreen ? player : screen;
+        const nativeFullscreenTarget = player;
         const requestFullscreen = nativeFullscreenTarget.requestFullscreen || nativeFullscreenTarget.webkitRequestFullscreen;
         if (!requestFullscreen) {
             fallbackFullscreen = true;
