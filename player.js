@@ -5,14 +5,6 @@
     const framePath = player.dataset.framePath;
     const frame = document.getElementById('frame');
     const screen = document.querySelector('.screen');
-    const lowResFrame = document.createElement('canvas');
-    lowResFrame.className = 'low-res-frame';
-    lowResFrame.width = 426;
-    lowResFrame.height = 240;
-    lowResFrame.setAttribute('aria-hidden', 'true');
-    screen.appendChild(lowResFrame);
-    const lowResContext = lowResFrame.getContext('2d');
-    if (lowResContext) lowResContext.imageSmoothingQuality = 'low';
     const frameNumber = document.getElementById('frameNumber');
     const timeDisplay = document.getElementById('timeDisplay');
     const seekBar = document.getElementById('seekBar');
@@ -78,18 +70,9 @@
         index = Math.max(0, Math.min(index, frameCount - 1));
         const src = cache.get(index) || getFramePath(index);
         frame.src = src;
-        if (frame.complete && frame.naturalWidth) renderLowResFrame();
         if (!isFullscreenActive()) updateStatus();
         prefetchAround();
     };
-
-    const renderLowResFrame = () => {
-        if (!lowResContext || !frame.complete || !frame.naturalWidth) return;
-        lowResContext.clearRect(0, 0, lowResFrame.width, lowResFrame.height);
-        lowResContext.drawImage(frame, 0, 0, lowResFrame.width, lowResFrame.height);
-    };
-
-    frame.addEventListener('load', renderLowResFrame);
 
     const stopPlayback = () => {
         if (rafId) cancelAnimationFrame(rafId);
@@ -267,7 +250,6 @@
             lastFullscreenState = fullscreen;
             preloadFrame(index);
             prefetchAround();
-            renderLowResFrame();
         }
         clearTimeout(controlsHideTimer);
         player.classList.toggle('is-controls-hidden', !fullscreen);

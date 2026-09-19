@@ -104,15 +104,7 @@ h1 {
     transition: opacity 160ms ease, transform 180ms ease;
 }
 
-.low-res-frame {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
 .screen.is-zoomed img { transform: scale(1.12); }
-.screen.is-zoomed .low-res-frame { transform: scale(1.12); }
 
 .screen-message {
     position: absolute;
@@ -278,23 +270,6 @@ h1 {
 .screen:-webkit-full-screen::after,
 .screen:fullscreen::after { display: none; }
 
-.screen:-webkit-full-screen img,
-.screen:fullscreen img,
-.player.is-frame-fullscreen .screen img {
-    display: none;
-    transition: none;
-}
-
-.screen img { display: none; }
-
-.screen:-webkit-full-screen .low-res-frame,
-.screen:fullscreen .low-res-frame,
-.player.is-frame-fullscreen .low-res-frame {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
 
 .timeline {
     display: grid;
