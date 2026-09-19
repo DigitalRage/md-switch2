@@ -24,6 +24,7 @@
     let playbackPosition = 0;
     let controlsHideTimer = 0;
     let fallbackFullscreen = false;
+    let lastFullscreenState = false;
 
     const formatTime = (frameIndex) => {
         const totalSeconds = Math.floor(frameIndex / sourceFps);
@@ -36,6 +37,8 @@
         const number = String(frameIndex + 1).padStart(6, '0');
         return `${framePath}/frame_${number}.jpeg`;
     };
+
+    const isFullscreenActive = () => Boolean(getFullscreenElement?.()) || fallbackFullscreen;
 
     const updateStatus = () => {
         frameNumber.textContent = `${index + 1} / ${frameCount}`;
@@ -59,14 +62,15 @@
     };
 
     const prefetchAround = () => {
-        for (let offset = -4; offset <= 4; offset++) preloadFrame(index + offset);
+        const range = isFullscreenActive() ? 2 : 4;
+        for (let offset = -1; offset <= range; offset++) preloadFrame(index + offset);
     };
 
     const showFrame = () => {
         index = Math.max(0, Math.min(index, frameCount - 1));
         const src = cache.get(index) || getFramePath(index);
         frame.src = src;
-        updateStatus();
+        if (!isFullscreenActive()) updateStatus();
         prefetchAround();
     };
 
@@ -241,6 +245,12 @@
         const fullscreen = (getFullscreenElement() === player || getFullscreenElement() === screen) || fallbackFullscreen;
         document.getElementById('fullscreenButton').textContent = fullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
         player.classList.toggle('is-frame-fullscreen', fallbackFullscreen);
+        if (fullscreen !== lastFullscreenState) {
+            cache.clear();
+            lastFullscreenState = fullscreen;
+            preloadFrame(index);
+            prefetchAround();
+        }
         clearTimeout(controlsHideTimer);
         player.classList.toggle('is-controls-hidden', !fullscreen);
         if (fullscreen) showFullscreenControls();

@@ -270,6 +270,12 @@ h1 {
 .screen:-webkit-full-screen::after,
 .screen:fullscreen::after { display: none; }
 
+.screen:-webkit-full-screen img,
+.screen:fullscreen img,
+.player.is-frame-fullscreen .screen img {
+    transition: none;
+}
+
 .timeline {
     display: grid;
     grid-template-columns: auto 1fr auto;
