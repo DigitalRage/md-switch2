@@ -23,6 +23,7 @@
     let lastPaintTime = 0;
     let playbackPosition = 0;
     let controlsHideTimer = 0;
+    let fallbackFullscreen = false;
 
     const formatTime = (frameIndex) => {
         const totalSeconds = Math.floor(frameIndex / sourceFps);
@@ -147,13 +148,25 @@
     document.getElementById('forwardButton').addEventListener('click', () => jump(jumpFrames));
     document.getElementById('stepBackButton').addEventListener('click', () => jump(-1));
     document.getElementById('stepForwardButton').addEventListener('click', () => jump(1));
+    const getFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+    const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
     document.getElementById('fullscreenButton').addEventListener('click', async () => {
-        if (document.fullscreenElement) {
-            await document.exitFullscreen();
+        if (getFullscreenElement()) {
+            if (exitFullscreen) await exitFullscreen.call(document);
+            return;
+        }
+        if (fallbackFullscreen) {
+            fallbackFullscreen = false;
+            updateFullscreenButton();
             return;
         }
         const requestFullscreen = player.requestFullscreen || player.webkitRequestFullscreen;
-        if (!requestFullscreen) return;
+        if (!requestFullscreen) {
+            fallbackFullscreen = true;
+            player.classList.add('is-fullscreen');
+            updateFullscreenButton();
+            return;
+        }
         try {
             await requestFullscreen.call(player, { navigationUI: 'hide' });
         } catch {
@@ -193,7 +206,7 @@
     });
 
     const showFullscreenControls = () => {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) return;
+        if (!getFullscreenElement() && !player.classList.contains('is-fullscreen')) return;
         player.classList.remove('is-controls-hidden');
         clearTimeout(controlsHideTimer);
         controlsHideTimer = setTimeout(() => player.classList.add('is-controls-hidden'), 3000);
@@ -215,8 +228,9 @@
 
     seekBar.max = frameCount - 1;
     const updateFullscreenButton = () => {
-        const fullscreen = document.fullscreenElement === player || document.webkitFullscreenElement === player;
+        const fullscreen = getFullscreenElement() === player || fallbackFullscreen;
         document.getElementById('fullscreenButton').textContent = fullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+        player.classList.toggle('is-fullscreen', fullscreen);
         clearTimeout(controlsHideTimer);
         player.classList.toggle('is-controls-hidden', !fullscreen);
         if (fullscreen) showFullscreenControls();

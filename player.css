@@ -120,7 +120,9 @@ h1 {
 
 .screen-message[hidden] { display: none; }
 
-.player:fullscreen {
+.player:fullscreen,
+.player:-webkit-full-screen,
+.player.is-fullscreen {
     position: relative;
     width: 100vw;
     height: 100vh;
@@ -131,7 +133,9 @@ h1 {
     background: #000;
 }
 
-.player:fullscreen .screen {
+.player:fullscreen .screen,
+.player:-webkit-full-screen .screen,
+.player.is-fullscreen .screen {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -141,44 +145,72 @@ h1 {
     border: 0;
 }
 
-.player:fullscreen .screen::after { display: none; }
+.player:fullscreen .screen::after,
+.player:-webkit-full-screen .screen::after,
+.player.is-fullscreen .screen::after { display: none; }
 
 .player:fullscreen .player-header,
+.player:-webkit-full-screen .player-header,
+.player.is-fullscreen .player-header,
 .player:fullscreen .timeline,
+.player:-webkit-full-screen .timeline,
+.player.is-fullscreen .timeline,
 .player:fullscreen .controls,
+.player:-webkit-full-screen .controls,
+.player.is-fullscreen .controls,
 .player:fullscreen .secondary-controls,
+.player:-webkit-full-screen .secondary-controls,
+.player.is-fullscreen .secondary-controls,
 .player:fullscreen .settings,
-.player:fullscreen .hint {
+.player:-webkit-full-screen .settings,
+.player.is-fullscreen .settings,
+.player:fullscreen .hint,
+.player:-webkit-full-screen .hint,
+.player.is-fullscreen .hint {
     position: relative;
     z-index: 2;
     transition: opacity 180ms ease;
 }
 
 .player:fullscreen .timeline,
+.player:-webkit-full-screen .timeline,
+.player.is-fullscreen .timeline,
 .player:fullscreen .controls,
-.player:fullscreen .secondary-controls {
+.player:-webkit-full-screen .controls,
+.player.is-fullscreen .controls,
+.player:fullscreen .secondary-controls,
+.player:-webkit-full-screen .secondary-controls,
+.player.is-fullscreen .secondary-controls {
     position: absolute;
     right: clamp(18px, 4vw, 52px);
     left: clamp(18px, 4vw, 52px);
     margin: 0;
 }
 
-.player:fullscreen .timeline {
+.player:fullscreen .timeline,
+.player:-webkit-full-screen .timeline,
+.player.is-fullscreen .timeline {
     bottom: 126px;
 }
 
-.player:fullscreen .controls {
+.player:fullscreen .controls,
+.player:-webkit-full-screen .controls,
+.player.is-fullscreen .controls {
     bottom: 76px;
     justify-content: center;
 }
 
-.player:fullscreen .secondary-controls {
+.player:fullscreen .secondary-controls,
+.player:-webkit-full-screen .secondary-controls,
+.player.is-fullscreen .secondary-controls {
     bottom: 20px;
     padding-top: 0;
     border-top: 0;
 }
 
-.player:fullscreen .settings {
+.player:fullscreen .settings,
+.player:-webkit-full-screen .settings,
+.player.is-fullscreen .settings {
     position: absolute;
     right: clamp(18px, 4vw, 52px);
     bottom: 76px;
@@ -186,9 +218,13 @@ h1 {
     margin: 0;
 }
 
-.player:fullscreen .hint { display: none; }
+.player:fullscreen .hint,
+.player:-webkit-full-screen .hint,
+.player.is-fullscreen .hint { display: none; }
 
-.player.is-controls-hidden:fullscreen > :not(.screen) {
+.player.is-controls-hidden:fullscreen > :not(.screen),
+.player.is-controls-hidden:-webkit-full-screen > :not(.screen),
+.player.is-controls-hidden.is-fullscreen > :not(.screen) {
     opacity: 0;
     pointer-events: none;
 }
