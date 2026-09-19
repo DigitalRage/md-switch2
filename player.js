@@ -18,6 +18,7 @@
     const timeDisplay = document.getElementById('timeDisplay');
     const seekBar = document.getElementById('seekBar');
     const playButton = document.getElementById('playButton');
+    const zoomButton = document.getElementById('zoomButton');
     const fpsSelect = document.getElementById('fpsSelect');
     const loopButton = document.getElementById('loopButton');
     const settings = document.getElementById('settings');
@@ -56,6 +57,12 @@
         const fitScale = Math.min(widthScale, heightScale);
         const zoomScale = screen.classList.contains('is-zoomed') ? 1.12 : 1;
         screen.style.setProperty('--frame-scale', String(fitScale * zoomScale));
+    };
+
+    const setZoom = (zoomed) => {
+        screen.classList.toggle('is-zoomed', zoomed);
+        zoomButton.setAttribute('aria-pressed', String(zoomed));
+        updateFrameScale();
     };
 
     const updateStatus = () => {
@@ -210,6 +217,7 @@
             updateFullscreenButton();
             return;
         }
+        setZoom(false);
         const nativeFullscreenTarget = player.requestFullscreen ? player : screen;
         const requestFullscreen = nativeFullscreenTarget.requestFullscreen || nativeFullscreenTarget.webkitRequestFullscreen;
         if (!requestFullscreen) {
@@ -233,10 +241,12 @@
             updateFullscreenButton();
         }
     });
-    document.getElementById('zoomButton').addEventListener('click', (event) => {
-        const zoomed = screen.classList.toggle('is-zoomed');
-        event.currentTarget.setAttribute('aria-pressed', String(zoomed));
-        updateFrameScale();
+    zoomButton.addEventListener('click', () => {
+        if (isFullscreenActive()) {
+            setZoom(false);
+            return;
+        }
+        setZoom(!screen.classList.contains('is-zoomed'));
     });
     document.getElementById('settingsButton').addEventListener('click', () => {
         settings.hidden = !settings.hidden;
@@ -292,6 +302,7 @@
     seekBar.max = frameCount - 1;
     const updateFullscreenButton = () => {
         const fullscreen = (getFullscreenElement() === player || getFullscreenElement() === screen) || fallbackFullscreen;
+        if (fullscreen) setZoom(false);
         document.getElementById('fullscreenButton').textContent = fullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
         player.classList.toggle('is-frame-fullscreen', fallbackFullscreen);
         if (fullscreen !== lastFullscreenState) {
