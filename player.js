@@ -26,7 +26,6 @@
     let controlsHideTimer = 0;
     let fallbackFullscreen = false;
     let lastFullscreenState = false;
-    frame.decoding = 'async';
 
     const formatTime = (frameIndex) => {
         const totalSeconds = Math.floor(frameIndex / sourceFps);
@@ -172,7 +171,7 @@
         }
         setZoom(false);
         player.classList.add('is-fullscreen');
-        const nativeFullscreenTarget = player;
+        const nativeFullscreenTarget = player.requestFullscreen ? player : screen;
         const requestFullscreen = nativeFullscreenTarget.requestFullscreen || nativeFullscreenTarget.webkitRequestFullscreen;
         if (!requestFullscreen) {
             fallbackFullscreen = true;
