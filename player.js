@@ -61,7 +61,6 @@
         if (frameIndex < 0 || frameIndex >= frameCount || cache.has(frameIndex)) return;
         const image = new Image();
         image.decoding = 'async';
-        image.fetchPriority = 'low';
         image.src = getFramePath(frameIndex);
         cache.set(frameIndex, image.src);
         image.onload = pruneCache;
@@ -192,7 +191,7 @@
         }
     });
     screen.addEventListener('click', () => {
-        if (getFullscreenElement() === screen) {
+        if (getFullscreenElement()) {
             if (exitFullscreen) exitFullscreen.call(document);
             return;
         }
